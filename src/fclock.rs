@@ -1,4 +1,4 @@
-use crate::OptionalArgs;
+use crate::opt_args::FClockArgs;
 use structopt::StructOpt;  // For the from_args() funtion
 use chrono::{Local, Timelike};
 use tui::{backend::Backend, layout::{Layout, Constraint, Rect}, Frame};
@@ -17,11 +17,11 @@ pub struct FClock {
     pos: FClockPos,
 
     // Fibonacci color blocks
-    block5: FBlock,
-    block3: FBlock,
-    block2: FBlock,
-    block1a: FBlock,
-    block1b: FBlock
+    fblock5: FBlock,
+    fblock3: FBlock,
+    fblock2: FBlock,
+    fblock1a: FBlock,
+    fblock1b: FBlock
 }
 
 impl Default for FClock {
@@ -30,52 +30,44 @@ impl Default for FClock {
             width: 60, 
             height: 20, 
             pos: FClockPos::Absolute(0, 0), 
-            block5: FBlock::default(), 
-            block3: FBlock::default(), 
-            block2: FBlock::default(), 
-            block1a: FBlock::default(), 
-            block1b: FBlock::default()
+            fblock5: FBlock::default(), 
+            fblock3: FBlock::default(), 
+            fblock2: FBlock::default(), 
+            fblock1a: FBlock::default(), 
+            fblock1b: FBlock::default()
         }
     }
 }
 
 impl FClock {
     pub fn from_optional_args() -> Self {
-        let mut clock = Self::default();
+        let mut clock = Self::default();  // HACK
 
-        let opt = OptionalArgs::from_args();
-        if opt.centered {
+        let args = FClockArgs::from_args();
+
+        // --- Centered position ---
+        if args.centered {
             clock.pos = FClockPos::Centered;
-        } else {
-            if let Some(size) = opt.size {
-                if size.len() == 2 {
-                    clock.width = size[0];
-                    clock.height = size[1];
-                } else {
-                    println!("Invalid size argument.");
-                    // TODO Print help maybe?
-                    return clock;
-                }
-            }
-            
-            if let Some(pos) = opt.pos {
-                if pos.len() == 2 {
-                    clock.pos = FClockPos::Absolute(pos[0], pos[1])
-                } else {
-                    println!("Invalid position argument.");
-                    // TODO Print help maybe?
-                    return clock;
-                }
-            }
         }
 
-        if opt.borders {
-            clock.block5 = clock.block5.with_borders();
-            clock.block3 = clock.block3.with_borders();
-            clock.block2 = clock.block2.with_borders();
-            clock.block1a = clock.block1a.with_borders();
-            clock.block1b = clock.block1b.with_borders();
+        // --- Position ---  // TODO: Ensure valid position
+        else {            
+           clock.pos = FClockPos::Absolute(args.x, args.y)
         }
+
+        // --- Borders visible ---
+        if args.borders {
+            clock.fblock5 = clock.fblock5.with_borders();
+            clock.fblock3 = clock.fblock3.with_borders();
+            clock.fblock2 = clock.fblock2.with_borders();
+            clock.fblock1a = clock.fblock1a.with_borders();
+            clock.fblock1b = clock.fblock1b.with_borders();
+        }
+
+        // --- Size ---  // TODO: Ensure valid size
+        clock.width = args.width;
+        clock.height = args.height;
+
     
         clock
     }
@@ -106,19 +98,19 @@ impl FClock {
         }
 
         // Block5
-        determine_block(&mut self.block5, &mut 5, &mut hours, &mut minutes);
+        determine_block(&mut self.fblock5, &mut 5, &mut hours, &mut minutes);
 
         // Block3
-        determine_block(&mut self.block3, &mut 3, &mut hours, &mut minutes);
+        determine_block(&mut self.fblock3, &mut 3, &mut hours, &mut minutes);
 
         // Block2
-        determine_block(&mut self.block2, &mut 2, &mut hours, &mut minutes);
+        determine_block(&mut self.fblock2, &mut 2, &mut hours, &mut minutes);
         
         // Block1a
-        determine_block(&mut self.block1a, &mut 1, &mut hours, &mut minutes);
+        determine_block(&mut self.fblock1a, &mut 1, &mut hours, &mut minutes);
         
         // Block1b
-        determine_block(&mut self.block1b, &mut 1, &mut hours, &mut minutes);
+        determine_block(&mut self.fblock1b, &mut 1, &mut hours, &mut minutes);
     }
 
     pub fn draw<B: Backend>(&self,  f: &mut Frame<B>) {
@@ -159,10 +151,10 @@ impl FClock {
             .split(layout2[0]);
 
 
-        self.block5.draw(f, layout5[0]);
-        self.block3.draw(f, layout3[0]);
-        self.block2.draw(f, layout2[1]);
-        self.block1a.draw(f, layout1[0]);
-        self.block1b.draw(f, layout1[1]);
+        self.fblock5.draw(f, layout5[0]);
+        self.fblock3.draw(f, layout3[0]);
+        self.fblock2.draw(f, layout2[1]);
+        self.fblock1a.draw(f, layout1[0]);
+        self.fblock1b.draw(f, layout1[1]);
     }
 }

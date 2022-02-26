@@ -1,45 +1,32 @@
-use std::time::Duration;
-
+// ===== Imports ====
 use tui::{backend::TermionBackend, Terminal};
-use termion::{raw::IntoRawMode, input::TermRead};
-use structopt::StructOpt;
+use termion::{input::TermRead, raw::IntoRawMode};
 
-
+// ===== Modules ====
 mod fclock;
 mod fblock;
+mod opt_args;
+
+// ===== Crate imports ====
 use fclock::FClock;
 
 
-#[derive(StructOpt)]
-#[structopt(name = "example", about = "An example of StructOpt usage.")]
-pub struct OptionalArgs {
-    #[structopt(short = "c", long = "centered")]
-    centered: bool,
-
-    #[structopt(short = "s", long = "size")]
-    size: Option<Vec<u16>>,
-
-    #[structopt(short = "p", long = "position")]
-    pos: Option<Vec<u16>>,
-
-    #[structopt(short = "b", long = "borders")]
-    borders: bool,
-}
-
-
 fn main() -> Result<(), std::io::Error> {
-    let stdout = std::io::stdout().into_raw_mode()?;
-    let mut stdin_keys = termion::async_stdin().keys();
-    let backend = TermionBackend::new(stdout);
-    let mut terminal = Terminal::new(backend)?;
     
-    
-    // Before main loop
-    terminal.clear()?;
-    //terminal.autoresize()?;
+    // ===== Before main loop =====
+    // Create clock
     let mut clock = FClock::from_optional_args();
-    
-    // Main loop
+    // Create new terminal with raw mode
+    let mut terminal = Terminal::new(
+        TermionBackend::new(std::io::stdout().into_raw_mode()?)
+    )?;
+    // Crete asynchronous standard input that listens to keys
+    let mut stdin_keys = termion::async_stdin().keys();
+    // Clear terminal before drawing clock
+    terminal.clear()?;
+
+
+    // ===== Main loop =====
     'main: loop {
         // Update
         clock.update();
@@ -57,13 +44,13 @@ fn main() -> Result<(), std::io::Error> {
             }
         }
         
-        std::thread::sleep(Duration::from_secs(1));
+        // Wait before next "frame"
+        std::thread::sleep(std::time::Duration::from_millis(200));  // HACK: Not ideal
     }
     
 
-    // After main loop
+    // ===== After main loop =====
     terminal.clear()?;
-    //terminal.autoresize()?;
 
 
     Ok(())
