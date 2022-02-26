@@ -40,10 +40,25 @@ impl Default for FClock {
 }
 
 impl FClock {
-    pub fn from_optional_args() -> Self {
-        let mut clock = Self::default();  // HACK
+    pub fn from_optional_args(term_size: Rect) -> Self {
+        let mut clock = Self::default();
 
         let args = FClockArgs::from_args();
+
+        // --- Size --- 
+        if args.width > term_size.width
+           || args.height > term_size.height {
+            panic!("Clocks of selected size cant fit in terminal!")
+        } else {
+            if args.borders && (args.width < 22 || args.height < 13) {
+                panic!("Minimal size of clocks with border is width=22 and height=13!");
+            } else if args.width < 6 || args.height < 3 {
+                panic!("Minimal size of clocks without border is width=6 and height=3!");  // TODO: This funtion should return result and panic in main
+            } else {
+                clock.width = args.width;
+                clock.height = args.height;
+            }
+        }
 
         // --- Centered position ---
         if args.centered {
@@ -51,8 +66,13 @@ impl FClock {
         }
 
         // --- Position ---  // TODO: Ensure valid position
-        else {            
-           clock.pos = FClockPos::Absolute(args.x, args.y)
+        else {
+            if (args.width + args.x) > term_size.width 
+               || (args.height + args.width) > term_size.height {
+                panic!("Invalid position entered!")
+            } else {
+                clock.pos = FClockPos::Absolute(args.x, args.y);
+            }
         }
 
         // --- Borders visible ---
@@ -63,11 +83,6 @@ impl FClock {
             clock.fblock1a = clock.fblock1a.with_borders();
             clock.fblock1b = clock.fblock1b.with_borders();
         }
-
-        // --- Size ---  // TODO: Ensure valid size
-        clock.width = args.width;
-        clock.height = args.height;
-
     
         clock
     }
@@ -75,7 +90,7 @@ impl FClock {
     pub fn update(&mut self) {
         let time = Local::now();
         let mut hours = time.hour12().1;
-        let mut minutes = (time.minute() as f32 / 5.0) as u32;
+        let mut minutes = (time.minute() + 2) / 5;  // Rounded to nearest 5
 
         // Hours = Red
         // Minutes = Green
@@ -120,7 +135,7 @@ impl FClock {
             FClockPos::Centered => Rect {
                 width: self.width,
                 height: self.height,
-                x: size.width / 2 - self.width / 2,  // TODO: Add check for terminal size
+                x: size.width / 2 - self.width / 2,
                 y: size.height / 2 - self.height / 2 
             },
             FClockPos::Absolute(x, y) => Rect {

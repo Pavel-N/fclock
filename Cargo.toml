@@ -8,6 +8,7 @@ description = "Fibonacci clock for the terminal"
 
 [dependencies]
 chrono = "0.4.19"
+libmath = "0.2.1"
 structopt = "0.3.26"
 termion = "1.5.6"
 tui = { version = "0.17", default-features = false, features = ['termion'] }
