@@ -68,7 +68,7 @@ impl FClock {
         // --- Position ---  // TODO: Ensure valid position
         else {
             if (args.width + args.x) > term_size.width 
-               || (args.height + args.width) > term_size.height {
+               || (args.height + args.y) > term_size.height {
                 panic!("Invalid position entered!")
             } else {
                 clock.pos = FClockPos::Absolute(args.x, args.y);
@@ -91,6 +91,8 @@ impl FClock {
         let time = Local::now();
         let mut hours = time.hour12().1;
         let mut minutes = (time.minute() + 2) / 5;  // Rounded to nearest 5
+
+        minutes = 6;
 
         // Hours = Red
         // Minutes = Green
