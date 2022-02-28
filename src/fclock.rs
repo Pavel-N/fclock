@@ -92,8 +92,6 @@ impl FClock {
         let mut hours = time.hour12().1;
         let mut minutes = (time.minute() + 2) / 5;  // Rounded to nearest 5
 
-        minutes = 6;
-
         // Hours = Red
         // Minutes = Green
         // Both = Blue
